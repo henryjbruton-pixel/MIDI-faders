@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Web MIDI Fader Panel</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 40px; }
+    .fader { margin: 20px; display: inline-block; }
+    input[type=range] { writing-mode: bt-lr; -webkit-appearance: slider-vertical; height: 200px; }
+  </style>
+</head>
+<body>
+  <h2>🎛️ Web MIDI Fader Panel</h2>
+  <div id="faders"></div>
+
+  <script>
+    const ccNumbers = [20, 21, 22, 23, 24]; // MIDI CC numbers for each fader
+    let midiOut = null;
+
+    function sendCC(cc, value) {
+      if (midiOut) {
+        midiOut.send([0xB0, cc, value]); // B0 = CC on channel 1
+      }
+    }
+
+    function createFader(cc) {
+      const div = document.createElement("div");
+      div.className = "fader";
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = 0;
+      slider.max = 127;
+      slider.value = 64;
+      slider.oninput = () => sendCC(cc, slider.value);
+      div.appendChild(slider);
+      div.appendChild(document.createElement("br"));
+      div.appendChild(document.createTextNode("CC " + cc));
+      return div;
+    }
+
+    navigator.requestMIDIAccess().then(midi => {
+      const outputs = Array.from(midi.outputs.values());
+      midiOut = outputs[0]; // Use first available output
+      ccNumbers.forEach(cc => {
+        document.getElementById("faders").appendChild(createFader(cc));
+      });
+    });
+  </script>
+</body>
+</html>
